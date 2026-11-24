@@ -41,7 +41,7 @@ export function parsePrevious(raw) {
 }
 
 export async function snapshot(previous, { check = probe, wait = sleep, now = () => new Date() } = {}) {
-  const first = await Promise.all(services.map(check));
+  const first = await Promise.all(services.map(service => check(service)));
   const needsConfirmation = services.map(({ id }, index) =>
     first[index] ? previous?.services[id] === 'unavailable' : true,
   );

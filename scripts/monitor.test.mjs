@@ -34,6 +34,17 @@ test('a transient check stays unconfirmed and initial success does not email', a
   assert.throws(() => parsePrevious('{"unexpected":true}'));
 });
 
+test('the initial probe invokes the checker with only its service argument', async () => {
+  const current = await snapshot(null, {
+    check: async (...args) => {
+      assert.equal(args.length, 1);
+      return true;
+    },
+    wait: async () => assert.fail('Healthy services should not need confirmation'),
+  });
+  assert.deepEqual(current.services, up.services);
+});
+
 test('both operators get separate messages and a retry reuses the idempotency key', async () => {
   const env = { STATUS_RESEND_KEY: 'test-only', STATUS_ALERT_FROM: 'test-sender@trypreplab.com', STATUS_ALERT_TO: 'operator-one@trypreplab.com,operator-two@trypreplab.com' };
   const alert = planAlerts(up, { ...up, services: { ...up.services, website: 'unavailable' } })[0];
