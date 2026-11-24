@@ -1,0 +1,14 @@
+* { box-sizing: border-box; }
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #172d22; background: #f5f8f4; }
+body { margin: 0; }
+main { max-width: 42rem; margin: 0 auto; padding: clamp(2rem, 8vw, 5rem) 1.25rem; }
+.brand { color: #315b47; font-size: 1rem; font-weight: 750; margin: 0 0 .55rem; }
+h1 { font-size: clamp(2rem, 7vw, 3.35rem); letter-spacing: -.05em; margin: 0 0 1.6rem; }
+section { background: #fff; border: 1px solid #d9e4db; border-radius: 1rem; padding: 1.25rem 1.5rem .75rem; }
+h2 { font-size: 1.165rem; margin: 0 0 .75rem; }
+ul { list-style: none; margin: 0; padding: 0; }
+li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1rem; justify-content: space-between; border-top: 1px solid #e0e9e1; padding: .85rem 0; }
+strong { font-size: .9rem; color: #5f645e; }
+strong[data-status="operational"] { color: #17643e; }
+strong[data-status="unavailable"] { color: #a32828; }
+#checked { color: #4a5d51; font-size: .875rem; margin: 0; border-top: 1px solid #e0e9e1; padding-top: .75rem; }

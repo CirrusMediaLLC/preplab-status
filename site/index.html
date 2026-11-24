@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Availability of the PrepLab website, learner app, and HQ sign-in.">
+  <title>PrepLab status</title>
+  <link rel="stylesheet" href="./status.css">
+  <script src="./status.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><p class="brand">PrepLab</p><h1>Service status</h1></header>
+    <section aria-labelledby="summary">
+      <h2 id="summary" aria-live="polite">Loading service status…</h2>
+      <ul>
+        <li><span>Website</span><strong data-service="website">Checking</strong></li>
+        <li><span>Learner app</span><strong data-service="app">Checking</strong></li>
+        <li><span>HQ sign-in</span><strong data-service="hq">Checking</strong></li>
+      </ul>
+      <p id="checked">Last checked <time>—</time></p>
+    </section>
+    <noscript><p><a href="./status.json">View the most recent check</a></p></noscript>
+  </main>
+</body>
+</html>

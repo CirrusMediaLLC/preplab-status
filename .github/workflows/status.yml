@@ -1,0 +1,85 @@
+name: PrepLab status
+
+on:
+  schedule:
+    - cron: '3-59/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      test_alert:
+        description: Send a clearly labeled test alert to both operators
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: preplab-status
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      snapshot_ready: ${{ steps.upload.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Read last acknowledged service state
+        shell: bash
+        run: |
+          if git ls-remote --exit-code --heads origin status-state >/dev/null; then
+            git fetch --depth=1 origin refs/heads/status-state:refs/remotes/origin/status-state
+            git show origin/status-state:status.json > "$RUNNER_TEMP/previous.json"
+          else
+            exit_code=$?
+            if [ "$exit_code" -ne 2 ]; then exit "$exit_code"; fi
+            touch "$RUNNER_TEMP/previous.json"
+          fi
+      - name: Check public service endpoints
+        run: node scripts/monitor.mjs probe "$RUNNER_TEMP/previous.json" "$RUNNER_TEMP/next.json" site/status.json
+      - name: Upload public snapshot
+        id: upload
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: site
+      - name: Send outage, recovery, or requested test emails
+        env:
+          STATUS_RESEND_KEY: ${{ secrets.STATUS_RESEND_KEY }}
+          STATUS_ALERT_FROM: ${{ secrets.STATUS_ALERT_FROM }}
+          STATUS_ALERT_TO: ${{ secrets.STATUS_ALERT_TO }}
+          STATUS_TEST_ALERT: ${{ inputs.test_alert == true }}
+        run: node scripts/monitor.mjs alert "$RUNNER_TEMP/previous.json" "$RUNNER_TEMP/next.json" site/status.json
+      - name: Save acknowledged status; keep the workflow active
+        shell: bash
+        run: |
+          if [ ! -f "$RUNNER_TEMP/next.json" ]; then exit 0; fi
+          state="$RUNNER_TEMP/state"
+          git worktree add --detach "$state"
+          cd "$state"
+          if git rev-parse --verify refs/remotes/origin/status-state >/dev/null 2>&1; then
+            git switch --detach origin/status-state
+          else
+            git switch --orphan first-status
+          fi
+          cp "$RUNNER_TEMP/next.json" status.json
+          git add status.json
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Update monitored service status'
+          git push origin HEAD:refs/heads/status-state
+  publish:
+    needs: monitor
+    if: ${{ !cancelled() && needs.monitor.outputs.snapshot_ready == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: pages
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
